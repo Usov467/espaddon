@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espaddon — аддон RF Online для гильдии ESPADA</title>
+<meta name="description" content="Аддон интерфейса RF Online (сервер Cerberus): окно группы, фильтр радара, панель цели, подсветка, сбор группы из TeamSpeak.">
+<link rel="icon" href="espada-emblem.svg" type="image/svg+xml">
+<style>
+  :root {
+    /* Палитра гильдии: чёрный, розовый, жёлтый (жёлтый — как у эмблемы). */
+    --bg: #0b0a0c; --panel: #151317; --line: #2a2529; --text: #f2eef3; --muted: #aaa2ae;
+    --yellow: #e6b93e; --yellow-soft: #f0d27e; --pink: #c08c9e; --pink-soft: #d6b1bf; --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  a { color: var(--pink-soft); }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 52px 0 28px; text-align: center; border-bottom: 1px solid var(--line);
+           background: radial-gradient(ellipse at top, #1f1419 0%, var(--bg) 70%); }
+  /* Эмблема гильдии (#ffff00 в файле) — маской в цвет палитры, файл не трогаем. */
+  .emblem { width: 94px; height: 150px; margin: 0 auto; background: var(--yellow);
+            -webkit-mask: url(espada-emblem.svg) center / contain no-repeat; mask: url(espada-emblem.svg) center / contain no-repeat;
+            filter: drop-shadow(0 0 16px rgba(201, 138, 163, .22)); }
+  h1 { margin: 14px 0 4px; font-size: 42px; letter-spacing: 2px; color: var(--yellow); }
+  .tag { color: var(--muted); margin: 0 0 22px; }
+  .lang { position: absolute; top: 14px; right: 16px; display: flex; gap: 4px; }
+  .lang button { background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 6px;
+                 padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  .lang button.on { color: var(--pink); border-color: var(--pink); }
+  .dl { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .btn { display: inline-block; text-decoration: none; padding: 12px 22px; border-radius: var(--radius);
+         font-weight: 600; border: 1px solid var(--pink); color: var(--pink-soft); background: transparent; }
+  .btn.main { background: var(--yellow); color: #17140c; border-color: var(--yellow); }
+  .btn:hover { filter: brightness(1.12); }
+  .btn small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
+  .lock { margin: 20px auto 0; max-width: 620px; padding: 10px 14px; border: 1px dashed #5a3c48;
+          border-radius: var(--radius); color: var(--muted); font-size: 14px; }
+  nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 18px; font-size: 14px; }
+  nav a { color: var(--muted); text-decoration: none; } nav a:hover { color: var(--pink); }
+  section { padding: 36px 0 4px; }
+  h2 { color: var(--yellow); font-size: 24px; margin: 0 0 16px; }
+  h3 { color: var(--pink); font-size: 18px; margin: 28px 0 8px; }
+  p { margin: 0 0 10px; }
+  ul, ol { padding-left: 22px; margin: 0 0 10px; } li { margin: 4px 0; }
+  .how { color: var(--muted); font-size: 14px; }
+  #guides h3 { font-size: 20px; margin-top: 32px; padding-top: 6px; border-top: 1px solid var(--line); }
+  #guides h3:first-of-type { border-top: 0; margin-top: 8px; }
+  code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 14px; color: var(--yellow-soft); }
+
+  /* Что нового — главный блок страницы */
+  .news { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 14px;
+          background: radial-gradient(120% 140% at 0% 0%, #1d1619 0%, var(--panel) 55%); }
+  .news::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+                  background: linear-gradient(90deg, var(--yellow), var(--pink)); }
+  .news-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 20px;
+               padding: 26px 28px 18px; border-bottom: 1px solid var(--line); }
+  .news-label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--pink); margin-bottom: 2px; }
+  .news-ver { font-size: 40px; line-height: 1; font-weight: 700; color: var(--yellow); letter-spacing: .02em; }
+  .news-date { color: var(--muted); font-size: 14px; padding-bottom: 4px; }
+  .news .notes { padding: 6px 28px 8px; }
+  .news .notes ul { list-style: none; padding: 0; margin: 0; }
+  .news .notes li { position: relative; padding: 12px 0 12px 22px; margin: 0; border-bottom: 1px solid #201c22; }
+  .news .notes li:last-child { border-bottom: 0; }
+  .news .notes li::before { content: ""; position: absolute; left: 2px; top: 21px; width: 7px; height: 7px;
+                            transform: rotate(45deg); background: var(--yellow); }
+  .news .notes p { margin: 12px 0; }
+  .news-foot { padding: 12px 28px 16px; text-align: right; font-size: 14px; }
+  .news-foot a { color: var(--muted); text-decoration: none; } .news-foot a:hover { color: var(--pink); }
+  .empty { color: var(--muted); padding: 22px 28px; margin: 0; }
+
+  details.faq { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin: 8px 0; }
+  details.faq summary { cursor: pointer; font-weight: 600; }
+  details.faq summary::marker { color: var(--pink); }
+  details.faq[open] { border-color: #5a3c48; }
+  details.faq p { color: var(--muted); margin: 8px 0 0; }
+  footer { margin: 40px 0 0; padding: 20px 0 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; text-align: center; }
+  html:not([lang="en"]) [data-en], html[lang="en"] [data-ru] { display: none !important; }
+  @media (max-width: 520px) { h1 { font-size: 32px; } .btn { width: 100%; } .news-head, .news .notes, .news-foot { padding-left: 18px; padding-right: 18px; } .news-ver { font-size: 34px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="lang"><button id="l-ru" class="on">RU</button><button id="l-en">EN</button></div>
+  <div class="wrap">
+    <div class="emblem" role="img" aria-label="Эмблема ESPADA"></div>
+    <h1>Espaddon</h1>
+    <p class="tag" data-ru>Аддон интерфейса RF Online · Cerberus · гильдия ESPADA</p>
+    <p class="tag" data-en>RF Online interface addon · Cerberus · ESPADA guild</p>
+    <div class="dl">
+      <a class="btn main" id="dl-main" href="#">
+        <span data-ru>Скачать</span><span data-en>Download</span>
+        <small data-ru>обычная версия</small><small data-en>standard</small>
+      </a>
+      <a class="btn" id="dl-fps" href="#">
+        <span data-ru>Скачать Extra FPS</span><span data-en>Download Extra FPS</span>
+        <small data-ru>DXVK, +20–30% FPS в толпе</small><small data-en>DXVK, +20–30% FPS in crowds</small>
+      </a>
+    </div>
+    <div class="lock" data-ru>Работает только у персонажей гильдии ESPADA (Espada, Espadaa).</div>
+    <div class="lock" data-en>Works only for ESPADA guild characters (Espada, Espadaa).</div>
+    <nav data-ru><a href="#news">Что нового</a><a href="#features">Что умеет</a><a href="#guides">Гайды</a><a href="#faq">Вопросы</a></nav>
+    <nav data-en><a href="#news">What's new</a><a href="#features">Features</a><a href="#guides">Guides</a><a href="#faq">FAQ</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== ЧТО НОВОГО ===================== -->
+  <section id="news">
+    <h2><span data-ru>Что нового</span><span data-en>What's new</span></h2>
+    <div class="news">
+      <div id="latest">
+        <p class="empty" data-ru>Загрузка…</p>
+        <p class="empty" data-en>Loading…</p>
+      </div>
+      <div class="news-foot"><a href="https://github.com/Usov467/espaddon/releases"><span data-ru>Все версии →</span><span data-en>All versions →</span></a></div>
+    </div>
+  </section>
+
+  <!-- ===================== ЧТО УМЕЕТ ===================== -->
+  <section id="features">
+    <h2 data-ru>Что умеет</h2><h2 data-en>Features</h2>
+
+    <div data-ru>
+      <p>Каждая функция включается отдельно. Выключенная — работает родное окно игры.</p>
+
+      <h3>Окно группы</h3>
+      <ul>
+        <li>Клик по имени — участник в цели.</li>
+        <li>Раскладка 1×8 или 2×4, размер 50–200%.</li>
+        <li>Цвет полосы HP по здоровью или один свой.</li>
+        <li>Бафы и дебафы участников. Можно оставить только выбранные бафы — видно, кому чего не хватает.</li>
+      </ul>
+
+      <h3>Радар</h3>
+      <ul>
+        <li>Фильтр точек: группа, метки, каждая раса, NPC, монстры, анимусы, башни, шахтёры и т. д.
+          Только скрывает — новых точек не добавляет.</li>
+        <li>Размер 100–300%, прозрачность, дальность 1–5 (колесо мыши над радаром).</li>
+        <li>Кольцо потери аггро: дальше него мобы бросают погоню.</li>
+      </ul>
+
+      <h3>Панель цели</h3>
+      <ul>
+        <li>Точный процент HP любой цели.</li>
+        <li>Значки свойств моба, бафы и дебафы цели.</li>
+      </ul>
+
+      <h3>Персонажи</h3>
+      <ul>
+        <li>Подсветка моделей своим цветом: цель, группа, метки, лидер гильдии.</li>
+        <li>Строка гильдии над головой: значок, название и рейтинг отключаются отдельно для своей гильдии,
+          своей и чужой расы.</li>
+        <li>Скрытие имён суммонов.</li>
+      </ul>
+
+      <h3>TeamSpeak</h3>
+      <p>Возможность собрать группу по каналу TeamSpeak: правый клик по кнопке Espaddon — и всем, кто сидит с
+        вами в канале, уходит приглашение в группу. Работает с TeamSpeak 3 и 5–6; если ник в TS отличается от
+        игрового, их можно сопоставить в настройках.</p>
+
+      <h3>Проверка готовности</h3>
+      <p>ПКМ по кнопке → «Проверка готовности». Запрос в чат группы; ответом считается любое сообщение
+        участника. Итог в чат — когда ответили все или через 60 с.</p>
+
+      <h3>Продажа мусора</h3>
+      <p>Кнопка у магазина NPC кладёт мусор из сумки в окно продажи; продаёте сами.</p>
+
+      <h3>Производительность</h3>
+      <ul>
+        <li>Счётчик FPS.</li>
+        <li>Реже анимировать дальних персонажей: до +12% FPS в толпе.</li>
+        <li>Extra FPS: отрисовка через DXVK (Vulkan), +20–30% FPS в толпе.</li>
+      </ul>
+
+      <h3>Исправления клиента</h3>
+      <ul>
+        <li>Без тряски камеры в бою.</li>
+        <li>Снятие бафов, залипших после быстрого воскрешения.</li>
+      </ul>
+
+      <h3>Раскладка</h3>
+      <p>Пока открыты настройки, окна двигаются мышью по сетке RFMods (10 px). Shift — без привязки,
+        ПКМ — вернуть на место.</p>
+    </div>
+
+    <div data-en>
+      <p>Each feature can be turned off separately — the game's own window takes its place.</p>
+
+      <h3>Party window</h3>
+      <ul>
+        <li>Click a name to target the member.</li>
+        <li>1×8 or 2×4 layout, size 50–200%.</li>
+        <li>HP bar colored by health or a single color.</li>
+        <li>Members' buffs and debuffs. Show only selected buffs to see who is missing what.</li>
+      </ul>
+
+      <h3>Radar</h3>
+      <ul>
+        <li>Dot filter: party, marks, each race, NPC, monsters, animus, towers, miners, etc. Hides only —
+          adds no new dots.</li>
+        <li>Size 100–300%, transparency, range 1–5 (mouse wheel over the radar).</li>
+        <li>Aggro-loss ring: beyond it mobs stop chasing.</li>
+      </ul>
+
+      <h3>Target frame</h3>
+      <ul>
+        <li>Exact HP percentage of any target.</li>
+        <li>Monster property icons, target buffs and debuffs.</li>
+      </ul>
+
+      <h3>Characters</h3>
+      <ul>
+        <li>Model highlighting in your colors: target, party, marks, guild leader.</li>
+        <li>Guild line above heads: emblem, name and rank toggle separately for own guild, own race and
+          other race.</li>
+        <li>Hide summon names.</li>
+      </ul>
+
+      <h3>TeamSpeak</h3>
+      <p>Gather a party from your TeamSpeak channel: right click the Espaddon button and everyone in your channel
+        gets a party invite. Works with TeamSpeak 3 and 5–6; if a TS name differs from the game name, map them in
+        the settings.</p>
+
+      <h3>Ready check</h3>
+      <p>Right click the button → "Ready check". A request goes to party chat; any message from a member counts
+        as an answer. Result goes to chat when all answered or after 60 s.</p>
+
+      <h3>Sell junk</h3>
+      <p>A button at the NPC shop puts junk from the bag into the sell window; you sell yourself.</p>
+
+      <h3>Performance</h3>
+      <ul>
+        <li>FPS counter.</li>
+        <li>Animate distant characters less often: up to +12% FPS in crowds.</li>
+        <li>Extra FPS: rendering through DXVK (Vulkan), +20–30% FPS in crowds.</li>
+      </ul>
+
+      <h3>Client fixes</h3>
+      <ul>
+        <li>No camera shake in combat.</li>
+        <li>Removes buffs stuck after a quick revive.</li>
+      </ul>
+
+      <h3>Layout</h3>
+      <p>While settings are open, windows drag on the RFMods grid (10 px). Shift — no snapping, right
+        click — back to default.</p>
+    </div>
+  </section>
+
+  <!-- ===================== ГАЙДЫ ===================== -->
+  <section id="guides">
+    <h2 data-ru>Гайды</h2><h2 data-en>Guides</h2>
+
+    <h3 id="install" data-ru>Установка</h3><h3 data-en>Installing</h3>
+    <ol data-ru>
+      <li>Распакуйте папку <code>Espaddon</code> в папку игры, рядом с <code>RF_Online_4gb.bin</code>.</li>
+      <li>При закрытых игре и лаунчере запустите <code>Espaddon\install.bat</code>.</li>
+    </ol>
+    <p class="how" data-ru>Чужой <code>d3d9.dll</code> (ReShade и т. п.) сохраняется как <code>d3d9.dll.esp-backup</code>.
+      Кнопка Espaddon появится в ряду кнопок RFMods.</p>
+    <ol data-en>
+      <li>Unpack the <code>Espaddon</code> folder into the game folder, next to <code>RF_Online_4gb.bin</code>.</li>
+      <li>With the game and launcher closed, run <code>Espaddon\install.bat</code>.</li>
+    </ol>
+    <p class="how" data-en>Another <code>d3d9.dll</code> (ReShade etc.) is kept as <code>d3d9.dll.esp-backup</code>.
+      The Espaddon button appears in the RFMods button row.</p>
+
+    <h3 id="update" data-ru>Обновление</h3><h3 data-en>Updating</h3>
+    <p data-ru>Новая версия — оранжевая точка на кнопке. При закрытых игре и лаунчере запустите
+      <code>Espaddon\update.bat</code>: скачает тот же вариант, проверит SHA-256, поставит. Настройки сохраняются.</p>
+    <p class="how" data-ru>С версии 0.16.0 и старше — один раз через «Установку»: <code>update.bat</code> там нет.</p>
+    <p data-en>A new version shows as an orange dot on the button. With the game and launcher closed, run
+      <code>Espaddon\update.bat</code>: it downloads the same variant, checks SHA-256 and installs. Settings stay.</p>
+    <p class="how" data-en>From 0.16.0 or older — once via "Installing": there is no <code>update.bat</code> yet.</p>
+
+    <h3 id="uninstall" data-ru>Удаление</h3><h3 data-en>Uninstalling</h3>
+    <p data-ru>При закрытой игре — <code>Espaddon\uninstall.bat</code>. Вернёт чужой <code>d3d9.dll</code>, если он был.
+      Папку <code>Espaddon</code> с настройками удалите вручную.</p>
+    <p data-en>With the game closed — <code>Espaddon\uninstall.bat</code>. Restores another <code>d3d9.dll</code> if
+      there was one. Delete the <code>Espaddon</code> folder with settings by hand.</p>
+
+    <h3 id="problems" data-ru>Проблемы</h3><h3 data-en>Problems</h3>
+    <div data-ru>
+      <details class="faq"><summary>Кнопка есть, аддон не работает</summary>
+        <p>Клик по кнопке покажет причину. Обычно — персонаж не из ESPADA: гильдия проверяется при первом входе в мир,
+          для смены нужен перезапуск игры.</p></details>
+      <details class="faq"><summary>После обновления клиента вернулись родные окна</summary>
+        <p>Аддон не знает новый клиент и отключается сам. Ждите новую версию.</p></details>
+      <details class="faq"><summary>Залипли бафы</summary>
+        <p>ПКМ по кнопке → «Убрать залипшие бафы».</p></details>
+      <details class="faq"><summary>Другое</summary>
+        <p>Пришлите <b>Tooky</b> файл <code>Espaddon\logs\espaddon.log</code> и опишите, что случилось.</p></details>
+    </div>
+    <div data-en>
+      <details class="faq"><summary>Button is there, addon does nothing</summary>
+        <p>Click the button for the reason. Usually the character is not in ESPADA: the guild is checked at the first
+          world entry, switching needs a game restart.</p></details>
+      <details class="faq"><summary>Native windows are back after a client update</summary>
+        <p>The addon does not know the new client and turns itself off. Wait for a new version.</p></details>
+      <details class="faq"><summary>Stuck buffs</summary>
+        <p>Right click the button → "Remove stuck buffs".</p></details>
+      <details class="faq"><summary>Something else</summary>
+        <p>Send <code>Espaddon\logs\espaddon.log</code> to <b>Tooky</b> and describe what happened.</p></details>
+    </div>
+  </section>
+
+  <!-- ===================== ВОПРОСЫ ===================== -->
+  <section id="faq">
+    <h2 data-ru>Вопросы</h2><h2 data-en>FAQ</h2>
+    <details class="faq"><summary><span data-ru>Это против правил?</span><span data-en>Is it against the rules?</span></summary>
+      <p data-ru>Только интерфейс: пакеты и механику не трогает, скрытого не показывает.</p>
+      <p data-en>Interface only: no packets or mechanics, shows nothing hidden.</p></details>
+    <details class="faq"><summary><span data-ru>RFMods и ReShade?</span><span data-en>RFMods and ReShade?</span></summary>
+      <p data-ru>RFMods — совместим. ReShade — тоже <code>d3d9.dll</code>, вместе не работают; установщик сохраняет его копию.</p>
+      <p data-en>RFMods — compatible. ReShade is also <code>d3d9.dll</code>, they don't run together; the installer keeps a backup.</p></details>
+    <details class="faq"><summary><span data-ru>Обычная или Extra FPS?</span><span data-en>Standard or Extra FPS?</span></summary>
+      <p data-ru>Функции одинаковые. Extra FPS быстрее в толпе, но зависит от видеокарты.</p>
+      <p data-en>Same features. Extra FPS is faster in crowds but depends on the GPU.</p></details>
+    <details class="faq"><summary><span data-ru>Аддон ходит в интернет?</span><span data-en>Does it go online?</span></summary>
+      <p data-ru>Раз за запуск спрашивает у GitHub номер последней версии. Выключить: <code>check=0</code> в <code>[update]</code> файла <code>Espaddon\espaddon.ini</code>.</p>
+      <p data-en>Once per launch it asks GitHub for the latest version number. Off: <code>check=0</code> in <code>[update]</code> of <code>Espaddon\espaddon.ini</code>.</p></details>
+  </section>
+</main>
+
+<footer class="wrap">
+  Espaddon · ESPADA
+</footer>
+
+<script>
+  const REPO = 'Usov467/espaddon';
+  const BASE = 'https://github.com/' + REPO + '/releases/latest/download/';
+  const html = document.documentElement;
+  let release = null;
+
+  // Текст релиза: русская часть, затем строка <!-- en --> и английская (publish.ps1). Нет английской — русская.
+  function notesFor(body, lang) {
+    const parts = (body || '').split(/^\s*<!--\s*en\s*-->\s*$/m);
+    const text = (lang === 'en' && parts[1] && parts[1].trim()) ? parts[1] : parts[0];
+    return text.trim();
+  }
+
+  // Markdown релиза → список: строки «- …» / «* …» — пункты, остальное — абзацы.
+  function renderNotes(text) {
+    const box = document.createElement('div');
+    box.className = 'notes';
+    let ul = null;
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line) { ul = null; continue; }
+      const m = line.match(/^[-*]\s+(.*)$/);
+      if (m) {
+        if (!ul) { ul = document.createElement('ul'); box.appendChild(ul); }
+        const li = document.createElement('li');
+        li.textContent = m[1];
+        ul.appendChild(li);
+      } else {
+        ul = null;
+        const p = document.createElement('p');
+        p.textContent = line.replace(/^#+\s*/, '');
+        box.appendChild(p);
+      }
+    }
+    return box;
+  }
+
+  // «Что нового» — только последняя сборка; остальные — по ссылке «Все версии».
+  function renderReleases() {
+    if (!release) return;
+    const lang = html.lang;
+    const latest = document.getElementById('latest');
+    latest.textContent = '';
+    // Шапка: «Версия» + крупный номер слева, дата словами справа.
+    const head = document.createElement('div');
+    head.className = 'news-head';
+    const left = document.createElement('div');
+    const label = document.createElement('div');
+    label.className = 'news-label';
+    label.textContent = lang === 'en' ? 'Latest version' : 'Последняя версия';
+    const ver = document.createElement('div');
+    ver.className = 'news-ver';
+    ver.textContent = (release.tag_name || release.name || '').replace(/^Espaddon\s*/i, '').replace(/^v/, '');
+    left.append(label, ver);
+    const d = document.createElement('div');
+    d.className = 'news-date';
+    const when = new Date(release.published_at || '');
+    d.textContent = isNaN(when) ? '' :
+      when.toLocaleDateString(lang === 'en' ? 'en-GB' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    head.append(left, d);
+    latest.append(head, renderNotes(notesFor(release.body, lang)));
+  }
+
+  function setLang(lang) {
+    html.lang = lang;
+    document.getElementById('l-ru').classList.toggle('on', lang === 'ru');
+    document.getElementById('l-en').classList.toggle('on', lang === 'en');
+    const en = lang === 'en' ? '-en' : '';
+    document.getElementById('dl-main').href = BASE + 'Espaddon' + en + '.zip';
+    document.getElementById('dl-fps').href = BASE + 'Espaddon-extrafps' + en + '.zip';
+    try { localStorage.setItem('lang', lang); } catch (e) {}
+    renderReleases();
+  }
+  let saved = null;
+  try { saved = localStorage.getItem('lang'); } catch (e) {}
+  setLang(saved || ((navigator.language || '').startsWith('ru') ? 'ru' : 'en'));
+  document.getElementById('l-ru').onclick = () => setLang('ru');
+  document.getElementById('l-en').onclick = () => setLang('en');
+
+  fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(r => { release = r; renderReleases(); })
+    .catch(() => {
+      if (release) return;
+      document.getElementById('latest').innerHTML =
+        '<p class="empty" data-ru>Не удалось загрузить описание версии.</p>' +
+        '<p class="empty" data-en>Could not load the release notes.</p>';
+    });
+</script>
+</body>
+</html>
