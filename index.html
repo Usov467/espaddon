@@ -65,6 +65,9 @@
   .news .notes li:last-child { border-bottom: 0; }
   .news .notes li::before { content: ""; position: absolute; left: 2px; top: 21px; width: 7px; height: 7px;
                             transform: rotate(45deg); background: var(--yellow); }
+  .news .notes li ul { margin-top: 6px; }
+  .news .notes li li { padding: 5px 0 5px 18px; border-bottom: 0; color: var(--muted); }
+  .news .notes li li::before { top: 13px; left: 3px; width: 5px; height: 5px; background: var(--pink); }
   .news .notes p { margin: 12px 0; }
   .news-foot { padding: 12px 28px 16px; text-align: right; font-size: 14px; }
   .news-foot a { color: var(--muted); text-decoration: none; } .news-foot a:hover { color: var(--pink); }
@@ -350,18 +353,25 @@
   function renderNotes(text) {
     const box = document.createElement('div');
     box.className = 'notes';
-    let ul = null;
+    let ul = null, sub = null;  // sub — подпункты (строка «- …» с отступом) последнего пункта
     for (const raw of text.split(/\r?\n/)) {
       const line = raw.trim();
-      if (!line) { ul = null; continue; }
+      if (!line) { ul = null; sub = null; continue; }
       const m = line.match(/^[-*]\s+(.*)$/);
-      if (m) {
+      if (m && ul && ul.lastElementChild && /^\s{2,}/.test(raw)) {
+        if (!sub) { sub = document.createElement('ul'); ul.lastElementChild.appendChild(sub); }
+        const li = document.createElement('li');
+        li.textContent = m[1];
+        sub.appendChild(li);
+      } else if (m) {
         if (!ul) { ul = document.createElement('ul'); box.appendChild(ul); }
+        sub = null;
         const li = document.createElement('li');
         li.textContent = m[1];
         ul.appendChild(li);
       } else {
         ul = null;
+        sub = null;
         const p = document.createElement('p');
         p.textContent = line.replace(/^#+\s*/, '');
         box.appendChild(p);
