@@ -97,8 +97,8 @@
         <small data-ru>обычная версия</small><small data-en>standard</small>
       </a>
       <a class="btn" id="dl-fps" href="#">
-        <span data-ru>Скачать Extra FPS</span><span data-en>Download Extra FPS</span>
-        <small data-ru>DXVK, +20–30% FPS в толпе</small><small data-en>DXVK, +20–30% FPS in crowds</small>
+        <span data-ru>Скачать DXVK</span><span data-en>Download DXVK</span>
+        <small data-ru>через Vulkan, +20–30% FPS в толпе</small><small data-en>via Vulkan, +20–30% FPS in crowds</small>
       </a>
     </div>
     <div class="lock" data-ru>Работает только у персонажей гильдии ESPADA (Espada, Espadaa).</div>
@@ -132,7 +132,7 @@
       <h3>Окно группы</h3>
       <ul>
         <li>Клик по имени — участник в цели.</li>
-        <li>Раскладка 1×8 или 2×4, размер 50–200%.</li>
+        <li>Сетка 1×8 или 2×4, размер 50–200%.</li>
         <li>Цвет полосы HP по здоровью или один свой.</li>
         <li>Бафы и дебафы участников. Можно оставить только выбранные бафы — видно, кому чего не хватает.</li>
         <li>Стрелка, куда бежать к участнику, и расстояние. Участник на другой карте — её сокращение (ГШ, Сет, ВК…).</li>
@@ -184,7 +184,7 @@
         <li>Реже анимировать дальних персонажей: до +12% FPS в толпе.</li>
         <li>Оптимизация радара: больше FPS в массовых драках.</li>
         <li>Оптимизация удаления персонажей: игра не замирает, когда из вида уходят десятки игроков.</li>
-        <li>Extra FPS: отрисовка через DXVK (Vulkan), +20–30% FPS в толпе.</li>
+        <li>Версия DXVK: отрисовка через Vulkan, +20–30% FPS в толпе.</li>
       </ul>
 
       <h3>Исправления клиента</h3>
@@ -204,7 +204,7 @@
       <h3>Party window</h3>
       <ul>
         <li>Click a name to target the member.</li>
-        <li>1×8 or 2×4 layout, size 50–200%.</li>
+        <li>1×8 or 2×4 grid, size 50–200%.</li>
         <li>HP bar colored by health or a single color.</li>
         <li>Members' buffs and debuffs. Show only selected buffs to see who is missing what.</li>
         <li>An arrow pointing to each member and the distance. A member on another map shows its short name (ГШ, Сет, ВК…).</li>
@@ -257,7 +257,7 @@
         <li>Animate distant characters less often: up to +12% FPS in crowds.</li>
         <li>Radar optimization: more FPS in mass fights.</li>
         <li>Character removal optimization: the game no longer freezes when dozens of players leave view.</li>
-        <li>Extra FPS: rendering through DXVK (Vulkan), +20–30% FPS in crowds.</li>
+        <li>DXVK version: rendering through Vulkan, +20–30% FPS in crowds.</li>
       </ul>
 
       <h3>Client fixes</h3>
@@ -314,7 +314,10 @@
       <details class="faq"><summary>Залипли бафы</summary>
         <p>ПКМ по кнопке → «Убрать залипшие бафы».</p></details>
       <details class="faq"><summary>Другое</summary>
-        <p>Пришлите <b>Tooky</b> файл <code>Espaddon\logs\espaddon.log</code> и опишите, что случилось.</p></details>
+        <p>Запустите <code>Espaddon\report.bat</code> — на рабочем столе появится <code>Espaddon-report-….zip</code>.
+          Пришлите его <b>Tooky</b> и опишите, что случилось и когда. Ключей TeamSpeak и паролей там нет.</p>
+        <p>Игра зависла — подождите минуту, не закрывая: аддон сам запишет, где она стоит. Потом закройте и запустите
+          <code>report.bat</code>.</p></details>
     </div>
     <div data-en>
       <details class="faq"><summary>Button is there, addon does nothing</summary>
@@ -325,7 +328,10 @@
       <details class="faq"><summary>Stuck buffs</summary>
         <p>Right click the button → "Remove stuck buffs".</p></details>
       <details class="faq"><summary>Something else</summary>
-        <p>Send <code>Espaddon\logs\espaddon.log</code> to <b>Tooky</b> and describe what happened.</p></details>
+        <p>Run <code>Espaddon\report.bat</code> — <code>Espaddon-report-….zip</code> appears on the desktop. Send it to
+          <b>Tooky</b> and describe what happened and when. No TeamSpeak keys or passwords inside.</p>
+        <p>Game hung — wait a minute without closing it: the addon records where it is stuck. Then close it and run
+          <code>report.bat</code>.</p></details>
     </div>
   </section>
 
@@ -338,9 +344,9 @@
     <details class="faq"><summary><span data-ru>RFMods и ReShade?</span><span data-en>RFMods and ReShade?</span></summary>
       <p data-ru>RFMods — совместим. ReShade — тоже <code>d3d9.dll</code>, вместе не работают; установщик сохраняет его копию.</p>
       <p data-en>RFMods — compatible. ReShade is also <code>d3d9.dll</code>, they don't run together; the installer keeps a backup.</p></details>
-    <details class="faq"><summary><span data-ru>Обычная или Extra FPS?</span><span data-en>Standard or Extra FPS?</span></summary>
-      <p data-ru>Функции одинаковые. Extra FPS быстрее в толпе, но зависит от видеокарты.</p>
-      <p data-en>Same features. Extra FPS is faster in crowds but depends on the GPU.</p></details>
+    <details class="faq"><summary><span data-ru>Обычная или DXVK?</span><span data-en>Standard or DXVK?</span></summary>
+      <p data-ru>Функции одинаковые. DXVK быстрее в толпе, но зависит от видеокарты. Раньше эта версия называлась Extra FPS.</p>
+      <p data-en>Same features. DXVK is faster in crowds but depends on the GPU. It used to be called Extra FPS.</p></details>
     <details class="faq"><summary><span data-ru>Аддон ходит в интернет?</span><span data-en>Does it go online?</span></summary>
       <p data-ru>Раз за запуск спрашивает у GitHub номер последней версии. Выключить: <code>check=0</code> в <code>[update]</code> файла <code>Espaddon\espaddon.ini</code>.</p>
       <p data-en>Once per launch it asks GitHub for the latest version number. Off: <code>check=0</code> in <code>[update]</code> of <code>Espaddon\espaddon.ini</code>.</p></details>
@@ -427,7 +433,7 @@
     document.getElementById('l-en').classList.toggle('on', lang === 'en');
     const en = lang === 'en' ? '-en' : '';
     document.getElementById('dl-main').href = BASE + 'Espaddon' + en + '.zip';
-    document.getElementById('dl-fps').href = BASE + 'Espaddon-extrafps' + en + '.zip';
+    document.getElementById('dl-fps').href = BASE + 'Espaddon-dxvk' + en + '.zip';
     try { localStorage.setItem('lang', lang); } catch (e) {}
     renderReleases();
   }
